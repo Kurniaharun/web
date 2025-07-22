@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Produk | Bloxstore</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .manage-header {display:flex;align-items:center;gap:16px;margin-bottom:24px;}
+    .manage-back {background:#7c5fa3;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:700;cursor:pointer;transition:background 0.2s;}
+    .manage-back:hover {background:#a88fc7;}
+    .manage-tabs {display:flex;gap:10px;margin-bottom:18px;}
+    .manage-tab {background:#e3d2f7;color:#7c5fa3;border:none;padding:8px 18px;border-radius:8px;font-weight:700;cursor:pointer;transition:background 0.2s;}
+    .manage-tab.active, .manage-tab:hover {background:#7c5fa3;color:#fff;}
+    .produk-list {margin-bottom:24px;}
+    .produk-card {background:#f7f2fd;border-radius:10px;padding:14px 12px;margin-bottom:12px;box-shadow:0 2px 8px 0 rgba(124,95,163,0.10);display:flex;flex-direction:column;gap:6px;}
+    .produk-actions {display:flex;gap:8px;margin-top:6px;}
+    .produk-btn {background:#7c5fa3;color:#fff;border:none;padding:6px 16px;border-radius:8px;font-weight:700;cursor:pointer;transition:background 0.2s;}
+    .produk-btn.edit {background:#2196f3;}
+    .produk-btn.delete {background:#c00;}
+    .produk-btn:hover {background:#a88fc7;}
+    .produk-btn.edit:hover {background:#1976d2;}
+    .produk-btn.delete:hover {background:#e53935;}
+    .add-form {background:#fff9f3;border-radius:10px;padding:14px 12px;margin-bottom:18px;box-shadow:0 1px 4px 0 rgba(124,95,163,0.07);}
+    .add-form label {font-weight:600;color:#7c5fa3;display:block;margin-bottom:4px;}
+    .add-form input, .add-form textarea, .add-form select {width:100%;padding:8px 10px;border-radius:8px;border:2px solid #a88fc7;font-size:1em;margin-bottom:10px;}
+    .add-form input:focus, .add-form textarea:focus, .add-form select:focus {border-color:#7c5fa3;outline:none;}
+    .add-form .produk-btn {width:100%;margin-top:8px;}
+    @media (max-width:700px) {.manage-header{flex-direction:column;align-items:flex-start;gap:8px;}.manage-tabs{flex-wrap:wrap;}.produk-card,.add-form{padding:10px 6px;}}
+  </style>
+</head>
+<body>
+  <div class="order-form-content" style="max-width:600px;margin:32px auto 0 auto;">
+    <div class="manage-header">
+      <button class="manage-back" onclick="window.location.href='admin.html'">&larr; Admin Panel</button>
+      <h2 style="color:#7c5fa3;margin:0;">Manage Produk</h2>
+    </div>
+    <div class="manage-tabs">
+      <button class="manage-tab active" data-cat="akun">Akun</button>
+      <button class="manage-tab" data-cat="joki">Joki</button>
+      <button class="manage-tab" data-cat="script">Script</button>
+    </div>
+    <div id="produk-list" class="produk-list"></div>
+    <div id="add-form-area"></div>
+  </div>
+  <script>
+    // Ambil produk dari script.js jika ada, lalu localStorage, lalu default
+    function getAllProduk() {
+      if (window.produk) {
+        // Convert ke format yang dipakai di manage
+        return {
+          akun: (window.produk.akun||[]).map(p=>({
+            title:p.title, price:p.price, desc:p.desc, spec:p.spec||[], img:p.img||''
+          })),
+          joki: (window.produk.joki||[]).map(p=>({
+            title:p.title, price:p.price, desc:p.desc, spec:p.spec||[], img:'assets/overlay.png'
+          })),
+          script: (window.produk.script||[]).map(p=>({
+            title:p.title, price:p.price, desc:p.desc, spec:p.spec||[], img:p.img||''
+          }))
+        };
+      }
+      let p = JSON.parse(localStorage.getItem('produk'));
+      if (p) return p;
+      // fallback default
+      return {
+        akun: [
+          {title:'Akun Pemula',price:'7000',desc:'Akun cocok untuk pemula',spec:['Level 700-1000'],img:'assets/akun-pemula.png'},
+          {title:'Akun Sultan',price:'25000',desc:'Akun Sultan dengan item langka',spec:['Level 2650 Max'],img:'assets/akun-sultan.png'}
+        ],
+        joki: [
+          {title:'1K FRAGMENT',price:'1100',desc:'Joki fragment',spec:[],img:'assets/overlay.png'}
+        ],
+        script: [
+          {title:'VIP SCRIPT',price:'25000',desc:'Script VIP',spec:[],img:'assets/vip-script.png'}
+        ]
+      };
+    }
+    function getProduk() {
+      let p = JSON.parse(localStorage.getItem('produk'));
+      if (!p) p = getAllProduk();
+      return p;
+    }
+    function saveProduk(p) {
+      localStorage.setItem('produk', JSON.stringify(p));
+    }
+    let currentCat = 'akun';
+    const produkList = document.getElementById('produk-list');
+    const addFormArea = document.getElementById('add-form-area');
+    function renderTabs() {
+      document.querySelectorAll('.manage-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cat === currentCat);
+        btn.onclick = () => { currentCat = btn.dataset.cat; renderProdukList(); renderTabs(); };
+      });
+    }
+    function renderProdukList() {
+      const produk = getProduk();
+      let html = '';
+      produk[currentCat].forEach((p,i) => {
+        html += `<div class="produk-card">
+          <b>${p.title}</b> <span style="color:#7c5fa3;font-weight:600;">Rp ${p.price}</span>
+          <div style="font-size:0.97em;color:#555;">${p.desc||''}</div>
+          <div style="font-size:0.93em;color:#888;">${(p.spec||[]).join(', ')}</div>
+          <div style="font-size:0.93em;color:#888;">${p.img?`<img src='${p.img}' alt='img' style='max-width:60px;max-height:60px;border-radius:6px;margin-top:4px;'>`:''}</div>
+          <div class="produk-actions">
+            <button class="produk-btn edit" onclick="editProduk(${i})">Edit</button>
+            <button class="produk-btn delete" onclick="deleteProduk(${i})">Delete</button>
+          </div>
+        </div>`;
+      });
+      produkList.innerHTML = html;
+      renderAddForm();
+    }
+    function renderAddForm(editIdx=null) {
+      const produk = getProduk();
+      let p = {title:'',price:'',desc:'',spec:'',img:''};
+      let isEdit = false;
+      if (editIdx!==null) { p = {...produk[currentCat][editIdx]}; isEdit = true; }
+      addFormArea.innerHTML = `
+        <form class="add-form" id="addProdukForm">
+          <label>Nama Produk</label>
+          <input type="text" id="addTitle" value="${p.title||''}" maxlength="40" required>
+          <label>Harga (angka saja)</label>
+          <input type="number" id="addPrice" value="${p.price||''}" required>
+          <label>Deskripsi</label>
+          <textarea id="addDesc" maxlength="200">${p.desc||''}</textarea>
+          <label>Spesifikasi (pisahkan dengan koma)</label>
+          <input type="text" id="addSpec" value="${(p.spec||[]).join(', ')}">
+          <label>URL Gambar</label>
+          <input type="text" id="addImg" value="${p.img||''}" placeholder="assets/namafile.png">
+          <button class="produk-btn" type="submit">${isEdit?'Update':'Tambah'} Produk</button>
+          ${isEdit?'<button class="produk-btn delete" type="button" onclick="renderAddForm()">Batal Edit</button>':''}
+        </form>
+      `;
+      document.getElementById('addProdukForm').onsubmit = function(e) {
+        e.preventDefault();
+        const title = document.getElementById('addTitle').value.trim();
+        const price = document.getElementById('addPrice').value.trim();
+        const desc = document.getElementById('addDesc').value.trim();
+        const spec = document.getElementById('addSpec').value.split(',').map(s=>s.trim()).filter(Boolean);
+        const img = document.getElementById('addImg').value.trim();
+        if (!title || !price) return alert('Nama dan harga wajib diisi!');
+        if (isEdit) produk[currentCat][editIdx] = {title,price,desc,spec,img};
+        else produk[currentCat].push({title,price,desc,spec,img});
+        saveProduk(produk);
+        renderProdukList();
+        renderTabs();
+      };
+    }
+    window.editProduk = function(idx) { renderAddForm(idx); };
+    window.deleteProduk = function(idx) {
+      if (!confirm('Yakin hapus produk ini?')) return;
+      const produk = getProduk();
+      produk[currentCat].splice(idx,1);
+      saveProduk(produk);
+      renderProdukList();
+      renderTabs();
+    };
+    renderTabs();
+    renderProdukList();
+  </script>
+</body>
+</html> 

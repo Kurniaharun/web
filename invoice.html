@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice Order | Bloxstore</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .chat-box {background:#f7f2fd;border-radius:12px;padding:18px 12px 12px 12px;max-width:420px;margin:24px auto 0 auto;box-shadow:0 2px 8px 0 rgba(124,95,163,0.10);}
+    .chat-logs {max-height:220px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:8px;}
+    .chat-msg {display:flex;align-items:flex-start;gap:8px;}
+    .chat-bubble {background:#fff;border-radius:10px;padding:8px 14px;box-shadow:0 1px 4px 0 rgba(124,95,163,0.07);max-width:80%;word-break:break-word;}
+    .chat-bubble.admin {background:#e3d2f7;color:#7c5fa3;font-weight:600;}
+    .chat-bubble.buyer {background:#fff9f3;color:#222;}
+    .chat-name {font-size:0.92em;font-weight:700;margin-bottom:2px;}
+    .chat-img {max-width:120px;max-height:120px;border-radius:8px;margin-top:4px;}
+    .chat-input-row {display:flex;gap:6px;align-items:center;}
+    .chat-input {flex:1;padding:8px 10px;border-radius:8px;border:2px solid #a88fc7;font-size:1em;}
+    .chat-input:focus {border-color:#7c5fa3;outline:none;}
+    .chat-upload {font-size:1.1em;}
+    .chat-send-btn {background:#7c5fa3;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:700;cursor:pointer;transition:background 0.2s;}
+    .chat-send-btn:hover {background:#a88fc7;}
+    .chat-preview-img {max-width:60px;max-height:60px;border-radius:6px;margin-left:8px;}
+    .chat-toggle-btn {background:#2196f3;color:#fff;border:none;padding:10px 22px;border-radius:8px;font-weight:700;cursor:pointer;transition:background 0.2s;margin:24px auto 0 auto;display:block;max-width:420px;}
+    .chat-toggle-btn:hover {background:#1976d2;}
+    .chat-full {max-width:600px;width:98vw;margin:32px auto 0 auto;}
+    .chat-back-btn {position:absolute;top:12px;right:18px;background:#7c5fa3;color:#fff;border:none;padding:7px 18px;border-radius:8px;font-weight:700;cursor:pointer;z-index:10;}
+    .chat-back-btn:hover {background:#a88fc7;}
+  </style>
+</head>
+<body>
+  <div id="invoice-area">
+    <div class="order-form-content" id="invoice-card" style="max-width:420px;margin:48px auto 0 auto;">
+      <h2>INVOICE TRANSAKSI</h2>
+      <div id="invoice-detail"></div>
+      <div id="invoice-info" style="margin-top:18px;color:#7c5fa3;font-weight:600;text-align:center;"></div>
+      <button class="chat-toggle-btn" id="openChatBtn">CHAT ADMIN</button>
+      <a href="index.html" style="display:inline-block;margin-top:18px;color:#7c5fa3;font-weight:600;text-decoration:underline;">Kembali ke Beranda</a>
+    </div>
+    <div id="chat-card" style="display:none;position:relative;">
+      <button class="chat-back-btn" id="backToInvoice">Back to Invoice</button>
+      <div class="chat-box chat-full">
+        <div style="font-weight:700;color:#7c5fa3;margin-bottom:8px;">Chat Admin</div>
+        <div class="chat-logs" id="chatLogs"></div>
+        <form id="chatForm" class="chat-input-row" autocomplete="off">
+          <input type="text" id="chatInput" class="chat-input" placeholder="Tulis pesan..." maxlength="200">
+          <input type="file" id="chatFile" class="chat-upload" accept="image/*" style="display:none;">
+          <label for="chatFile" style="cursor:pointer;" title="Upload gambar"><span style="font-size:1.3em;">📎</span></label>
+          <button type="submit" class="chat-send-btn">Kirim</button>
+          <img id="chatPreviewImg" class="chat-preview-img" style="display:none;"/>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script>
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+    const trxId = getQueryParam('id');
+    const invoice = document.getElementById('invoice-detail');
+    const infoBox = document.getElementById('invoice-info');
+    const invoiceCard = document.getElementById('invoice-card');
+    const chatCard = document.getElementById('chat-card');
+    const openChatBtn = document.getElementById('openChatBtn');
+    const backToInvoice = document.getElementById('backToInvoice');
+    // ===== INVOICE =====
+    function renderInvoice() {
+      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      const order = orders.find(o => o.id === trxId);
+      if (!order) {
+        invoice.innerHTML = '<div style="color:#c00;font-weight:700;">Data transaksi tidak ditemukan.</div>';
+        infoBox.textContent = '';
+        return;
+      }
+      invoice.innerHTML = `
+        <div style="margin-bottom:16px;padding:12px 0 8px 0;border-bottom:1.5px solid #e3d2f7;">
+          <div style="font-size:1.1rem;font-weight:700;color:#7c5fa3;">ID Transaksi: <span style="color:#ff6b35;">${order.id}</span></div>
+          <div style="margin-top:4px;font-size:1.05rem;"><b>Item:</b> ${order.item}</div>
+        </div>
+        <div style="margin-bottom:10px;"><b>No. WhatsApp:</b> <span style="color:#2196f3;">${order.wa}</span></div>
+        <div style="margin-bottom:10px;"><b>Status:</b> <span id="status-invoice" style="font-weight:700;color:${order.status==='pending'?'#ff9800':order.status==='proses'?'#2196f3':'#28a745'};text-transform:uppercase;">${order.status}</span></div>
+        <div style="margin-bottom:10px;"><b>Bukti Transfer:</b><br>
+          <img src="${order.bukti}" alt="Bukti Transfer" style="max-width:180px;border-radius:10px;margin-top:6px;box-shadow:0 2px 8px 0 rgba(124,95,163,0.13);">
+        </div>
+      `;
+      if (order.status === 'pending') {
+        infoBox.textContent = 'Pembayaran berhasil dikirim. Silakan tunggu, admin akan menghubungi Anda via WhatsApp setelah pembayaran diverifikasi.';
+      } else if (order.status === 'proses') {
+        infoBox.textContent = 'Pesanan Anda sedang diproses oleh admin. Mohon tunggu konfirmasi selanjutnya.';
+      } else if (order.status === 'sukses') {
+        infoBox.textContent = 'Pesanan Anda telah selesai dan sukses! Admin akan segera menghubungi Anda.';
+      } else {
+        infoBox.textContent = '';
+      }
+    }
+    renderInvoice();
+    setInterval(renderInvoice, 3000);
+    // ===== CHAT =====
+    const chatLogs = document.getElementById('chatLogs');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const chatFile = document.getElementById('chatFile');
+    const chatPreviewImg = document.getElementById('chatPreviewImg');
+    let chatImgData = '';
+    let lastChatLength = 0;
+    function renderChat(smooth=false) {
+      const logs = JSON.parse(localStorage.getItem('chat_'+trxId) || '[]');
+      // Jangan update chat jika user sedang mengetik (input focus/ada isi), kecuali ada pesan baru
+      const isTyping = document.activeElement === chatInput || chatInput.value.length > 0;
+      if (isTyping && logs.length === lastChatLength) return;
+      chatLogs.innerHTML = logs.map(msg => `
+        <div class="chat-msg">
+          <div class="chat-bubble ${msg.role}">
+            <div class="chat-name">${msg.role==='admin'?'admin':'buyer - '+trxId}</div>
+            <div>${msg.text?msg.text.replace(/\n/g,'<br>'):''}</div>
+            ${msg.img?`<img src="${msg.img}" class="chat-img" alt="img">`:''}
+          </div>
+        </div>
+      `).join('');
+      lastChatLength = logs.length;
+      if (smooth) chatLogs.scrollTop = chatLogs.scrollHeight;
+    }
+    renderChat(true);
+    setInterval(()=>renderChat(false), 2000);
+    chatFile.onchange = function() {
+      const file = this.files[0];
+      if (!file) { chatImgData = ''; chatPreviewImg.style.display='none'; return; }
+      if (!file.type.startsWith('image/')) { alert('File harus gambar!'); this.value=''; return; }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        chatImgData = e.target.result;
+        chatPreviewImg.src = chatImgData;
+        chatPreviewImg.style.display = 'inline-block';
+      };
+      reader.readAsDataURL(file);
+    };
+    chatForm.onsubmit = function(e) {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (!text && !chatImgData) return;
+      const logs = JSON.parse(localStorage.getItem('chat_'+trxId) || '[]');
+      logs.push({role:'buyer',text:text,img:chatImgData});
+      localStorage.setItem('chat_'+trxId, JSON.stringify(logs));
+      chatInput.value = '';
+      chatImgData = '';
+      chatFile.value = '';
+      chatPreviewImg.style.display = 'none';
+      renderChat(true);
+    };
+    // Toggle chat/invoice
+    openChatBtn.onclick = function() {
+      invoiceCard.style.display = 'none';
+      chatCard.style.display = '';
+    };
+    backToInvoice.onclick = function() {
+      chatCard.style.display = 'none';
+      invoiceCard.style.display = '';
+    };
+  </script>
+</body>
+</html> 

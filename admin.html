@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | Bloxstore</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .order-list-row {display:flex;align-items:center;gap:16px;background:#f7f2fd;border-radius:8px;padding:10px 14px;margin-bottom:10px;box-shadow:0 1px 4px 0 rgba(124,95,163,0.07);}
+    .order-list-id {font-weight:700;color:#7c5fa3;}
+    .order-list-status {font-weight:700;text-transform:uppercase;}
+    .order-list-btn {background:#7c5fa3;color:#fff;border:none;padding:6px 18px;border-radius:8px;font-weight:700;cursor:pointer;transition:background 0.2s;}
+    .order-list-btn:hover {background:#a88fc7;}
+    .order-row {display:flex;gap:24px;align-items:flex-start;margin-bottom:32px;}
+    .order-card {background:#f7f2fd;border-radius:10px;padding:16px 14px;box-shadow:0 2px 8px 0 rgba(124,95,163,0.10);min-width:260px;max-width:320px;flex:1;}
+    .chat-box {background:#f7f2fd;border-radius:12px;padding:18px 12px 12px 12px;min-width:260px;max-width:340px;box-shadow:0 2px 8px 0 rgba(124,95,163,0.10);flex:1;}
+    .chat-logs {max-height:220px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:8px;}
+    .chat-msg {display:flex;align-items:flex-start;gap:8px;}
+    .chat-bubble {background:#fff;border-radius:10px;padding:8px 14px;box-shadow:0 1px 4px 0 rgba(124,95,163,0.07);max-width:80%;word-break:break-word;}
+    .chat-bubble.admin {background:#e3d2f7;color:#7c5fa3;font-weight:600;}
+    .chat-bubble.buyer {background:#fff9f3;color:#222;}
+    .chat-name {font-size:0.92em;font-weight:700;margin-bottom:2px;}
+    .chat-img {max-width:120px;max-height:120px;border-radius:8px;margin-top:4px;}
+    .chat-input-row {display:flex;gap:6px;align-items:center;}
+    .chat-input {flex:1;padding:8px 10px;border-radius:8px;border:2px solid #a88fc7;font-size:1em;}
+    .chat-input:focus {border-color:#7c5fa3;outline:none;}
+    .chat-upload {font-size:1.1em;}
+    .chat-send-btn {background:#7c5fa3;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:700;cursor:pointer;transition:background 0.2s;}
+    .chat-send-btn:hover {background:#a88fc7;}
+    .chat-preview-img {max-width:60px;max-height:60px;border-radius:6px;margin-left:8px;}
+    .manage-produk-btn {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      background: #7c5fa3;
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      z-index: 200;
+      box-shadow: 0 2px 8px 0 rgba(124,95,163,0.13);
+      transition: background 0.2s;
+    }
+    .manage-produk-btn:hover { background: #a88fc7; }
+    @media (max-width: 700px) {
+      .manage-produk-btn { padding: 8px 12px; font-size: 0.95rem; top: 10px; left: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="order-form-content" style="max-width:1200px;margin:48px auto 0 auto;">
+    <h2>ADMIN PANEL ORDER</h2>
+    <div id="admin-login">
+      <label for="admin-pass">Password Admin</label>
+      <input type="password" id="admin-pass" placeholder="Password admin..." style="margin-bottom:10px;">
+      <button class="submit-order-btn" id="loginBtn">Login</button>
+      <div id="login-error" style="color:#c00;font-weight:600;margin-top:8px;"></div>
+    </div>
+    <div id="admin-orders" style="display:none;">
+      <h3 style="color:#7c5fa3;margin-bottom:16px;">Daftar Orderan</h3>
+      <div id="orders-list"></div>
+      <div id="order-detail-area"></div>
+      <button class="submit-order-btn" id="logoutBtn" style="margin-top:24px;background:#ff6b35;">Logout</button>
+    </div>
+  </div>
+  <script>
+    const PASS = 'Laww123@@';
+    const loginBox = document.getElementById('admin-login');
+    const ordersBox = document.getElementById('admin-orders');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const loginError = document.getElementById('login-error');
+    const ordersList = document.getElementById('orders-list');
+    const orderDetailArea = document.getElementById('order-detail-area');
+    let openedOrderId = null;
+
+    function renderOrders() {
+      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      if (!orders.length) {
+        ordersList.innerHTML = '<div style="color:#888;font-weight:600;">Belum ada order masuk.</div>';
+        orderDetailArea.innerHTML = '';
+        return;
+      }
+      ordersList.innerHTML = orders.map(order => {
+        let statusColor = order.status==='pending'? '#ff9800' : order.status==='proses'? '#2196f3' : order.status==='sukses'? '#28a745' : order.status==='cancel'? '#c00' : '#888';
+        let statusLabel = order.status==='cancel' ? 'CANCEL' : order.status;
+        return `
+          <div class="order-list-row">
+            <span class="order-list-id">${order.id}</span>
+            <span class="order-list-status" style="color:${statusColor};">${statusLabel}</span>
+            <button class="order-list-btn" onclick="showOrderDetail('${order.id}')">${openedOrderId===order.id?'Tutup':'Show'}</button>
+          </div>
+        `;
+      }).join('');
+      if (openedOrderId) renderOrderDetail(openedOrderId);
+      else orderDetailArea.innerHTML = '';
+    }
+
+    window.showOrderDetail = function(id) {
+      if (openedOrderId === id) {
+        openedOrderId = null;
+        renderOrders();
+        return;
+      }
+      openedOrderId = id;
+      renderOrders();
+    }
+
+    function renderOrderDetail(id) {
+      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      const order = orders.find(o => o.id === id);
+      if (!order) { orderDetailArea.innerHTML = ''; return; }
+      let statusColor = order.status==='pending'? '#ff9800' : order.status==='proses'? '#2196f3' : order.status==='sukses'? '#28a745' : order.status==='cancel'? '#c00' : '#888';
+      let statusLabel = order.status==='cancel' ? 'CANCEL' : order.status;
+      const chatId = 'chat_' + order.id;
+      orderDetailArea.innerHTML = `
+        <div class="order-row">
+          <div class="order-card">
+            <div style="margin-bottom:6px;"><b>ID Transaksi:</b> <span style="color:#7c5fa3;">${order.id}</span></div>
+            <div style="margin-bottom:6px;"><b>Item:</b> ${order.item}</div>
+            <div style="margin-bottom:6px;"><b>No. WhatsApp:</b> ${order.wa}</div>
+            <div style="margin-bottom:6px;"><b>Status:</b> <span style="font-weight:700;color:${statusColor};text-transform:uppercase;">${statusLabel}</span></div>
+            <div style="margin-bottom:10px;"><b>Bukti Transfer:</b><br>
+              <img src="${order.bukti}" alt="Bukti Transfer" style="max-width:120px;border-radius:8px;margin-top:6px;box-shadow:0 2px 8px 0 rgba(124,95,163,0.13);">
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;">
+              <button class="submit-order-btn" style="background:#2196f3;" onclick="updateStatus('${order.id}','proses')">Proses</button>
+              <button class="submit-order-btn" style="background:#28a745;" onclick="updateStatus('${order.id}','sukses')">Sukses</button>
+              <button class="submit-order-btn" style="background:#c00;" onclick="updateStatus('${order.id}','cancel')">Cancel</button>
+              <button class="submit-order-btn" style="background:#888;" onclick="deleteOrder('${order.id}')">Hapus</button>
+            </div>
+          </div>
+          <div class="chat-box" data-chatid="${chatId}">
+            <div style="font-weight:700;color:#7c5fa3;margin-bottom:8px;">Chat Buyer</div>
+            <div class="chat-logs" id="chatLogs_${order.id}"></div>
+            <form class="chat-input-row" id="chatForm_${order.id}" autocomplete="off">
+              <input type="text" class="chat-input" id="chatInput_${order.id}" placeholder="Tulis pesan..." maxlength="200">
+              <input type="file" class="chat-upload" id="chatFile_${order.id}" accept="image/*" style="display:none;">
+              <label for="chatFile_${order.id}" style="cursor:pointer;" title="Upload gambar"><span style="font-size:1.3em;">📎</span></label>
+              <button type="submit" class="chat-send-btn">Kirim</button>
+              <img id="chatPreviewImg_${order.id}" class="chat-preview-img" style="display:none;"/>
+            </form>
+          </div>
+        </div>
+      `;
+      initChatBox(order.id);
+    }
+
+    function initChatBox(trxId) {
+      const chatLogs = document.getElementById('chatLogs_' + trxId);
+      const chatForm = document.getElementById('chatForm_' + trxId);
+      const chatInput = document.getElementById('chatInput_' + trxId);
+      const chatFile = document.getElementById('chatFile_' + trxId);
+      const chatPreviewImg = document.getElementById('chatPreviewImg_' + trxId);
+      let chatImgData = '';
+      let lastChatLength = 0;
+      function renderChat(smooth=false) {
+        const logs = JSON.parse(localStorage.getItem('chat_' + trxId) || '[]');
+        const isTyping = document.activeElement === chatInput || chatInput.value.length > 0;
+        if (isTyping && logs.length === lastChatLength) return;
+        chatLogs.innerHTML = logs.map(msg => `
+          <div class="chat-msg">
+            <div class="chat-bubble ${msg.role}">
+              <div class="chat-name">${msg.role==='admin'?'admin':'buyer - '+trxId}</div>
+              <div>${msg.text?msg.text.replace(/\n/g,'<br>'):''}</div>
+              ${msg.img?`<img src="${msg.img}" class="chat-img" alt="img">`:''}
+            </div>
+          </div>
+        `).join('');
+        lastChatLength = logs.length;
+        if (smooth) chatLogs.scrollTop = chatLogs.scrollHeight;
+      }
+      renderChat(true);
+      setInterval(()=>renderChat(false), 2000);
+      chatFile.onchange = function() {
+        const file = this.files[0];
+        if (!file) { chatImgData = ''; chatPreviewImg.style.display='none'; return; }
+        if (!file.type.startsWith('image/')) { alert('File harus gambar!'); this.value=''; return; }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          chatImgData = e.target.result;
+          chatPreviewImg.src = chatImgData;
+          chatPreviewImg.style.display = 'inline-block';
+        };
+        reader.readAsDataURL(file);
+      };
+      chatForm.onsubmit = function(e) {
+        e.preventDefault();
+        const text = chatInput.value.trim();
+        if (!text && !chatImgData) return;
+        const logs = JSON.parse(localStorage.getItem('chat_' + trxId) || '[]');
+        logs.push({role:'admin',text:text,img:chatImgData});
+        localStorage.setItem('chat_' + trxId, JSON.stringify(logs));
+        chatInput.value = '';
+        chatImgData = '';
+        chatFile.value = '';
+        chatPreviewImg.style.display = 'none';
+        renderChat(true);
+      };
+    }
+
+    function updateStatus(id, status) {
+      let orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      const idx = orders.findIndex(o => o.id === id);
+      if (idx !== -1) {
+        orders[idx].status = status;
+        localStorage.setItem('orders', JSON.stringify(orders));
+        renderOrders();
+      }
+    }
+    window.updateStatus = updateStatus;
+
+    function deleteOrder(id) {
+      let orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      orders = orders.filter(o => o.id !== id);
+      localStorage.setItem('orders', JSON.stringify(orders));
+      renderOrders();
+    }
+    window.deleteOrder = deleteOrder;
+
+    function showOrders() {
+      loginBox.style.display = 'none';
+      ordersBox.style.display = '';
+      renderOrders();
+    }
+
+    // Cek session login
+    if (localStorage.getItem('admin_logged_in') === '1') {
+      showOrders();
+    }
+
+    loginBtn.onclick = function() {
+      const pass = document.getElementById('admin-pass').value;
+      if (pass === PASS) {
+        localStorage.setItem('admin_logged_in', '1');
+        showOrders();
+      } else {
+        loginError.textContent = 'Password salah!';
+      }
+    };
+    logoutBtn.onclick = function() {
+      loginBox.style.display = '';
+      ordersBox.style.display = 'none';
+      document.getElementById('admin-pass').value = '';
+      loginError.textContent = '';
+      localStorage.removeItem('admin_logged_in');
+    };
+
+    // Auto-refresh order setiap 3 detik
+    setInterval(function() {
+      if (ordersBox.style.display !== 'none') renderOrders();
+    }, 3000);
+  </script>
+</body>
+</html> 

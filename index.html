@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Bloxstore - Tempat terpercaya untuk kebutuhan Joki, Akun, dan Script Blox Fruits. Fast response, harga bersahabat, pelayanan ramah, dan 100% aman!">
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="Bloxstore - Blox Fruits Service Store" />
+  <meta property="og:description" content="Tempat terpercaya untuk kebutuhan Joki, Akun, dan Script Blox Fruits. Fast response, harga bersahabat, pelayanan ramah, dan 100% aman!" />
+  <meta property="og:image" content="https://bloxstore.pages.dev/assets/logo.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="400" />
+  <meta property="og:image:height" content="400" />
+  <meta property="og:url" content="https://bloxstore.pages.dev/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Bloxstore" />
+  <title>Bloxstore - Joki, Akun, Script Blox Fruits</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <!-- Header / Banner -->
+  <header class="header">
+    <div class="logo-area">
+      <img src="assets/logo.png" alt="Logo Bloxstore" class="logo">
+      <div class="store-title">
+        <h1>BLOXSTORE</h1>
+        <span class="official">OFFICIAL STORE</span>
+      </div>
+    </div>
+    <div class="banner">
+      <div class="banner-title">Bloxstore - Blox Fruits Service Store</div>
+      <div class="banner-desc">Tempat terpercaya untuk kebutuhan Joki, Akun, dan Script Blox Fruits.</div>
+      <div class="banner-promo">Fast response, harga bersahabat, pelayanan ramah, dan 100% aman!</div>
+    </div>
+    
+    <!-- Testimonial Button -->
+    <div class="testimonial-section">
+      <div class="testimonial-hint">
+        <span>Lihat Review Customer</span>
+        <i class="fas fa-arrow-right"></i>
+      </div>
+      <button class="testimonial-btn" id="testimonialBtn">
+        <i class="fas fa-star"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Stats Section -->
+  <section class="stats-section">
+    <div class="stats-container">
+      <div class="stat-item">
+        <div class="stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" id="customerCount">1k+</div>
+          <div class="stat-label">Total Customer</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon">
+          <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">4.9</div>
+          <div class="stat-label">Rating</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">24/7</div>
+          <div class="stat-label">Online</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">100%</div>
+          <div class="stat-label">Aman</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Kategori -->
+  <nav class="category-nav">
+    <button class="category-btn active" data-category="bestseller">Best Seller</button>
+    <button class="category-btn" data-category="akun">Akun</button>
+    <button class="category-btn" data-category="joki">Joki</button>
+    <button class="category-btn" data-category="script">Script</button>
+    <button class="category-btn" data-category="jokilevel">Joki Level</button>
+  </nav>
+
+  <!-- Search Bar -->
+  <div class="search-bar" id="searchBar">
+    <input type="text" id="searchInput" placeholder="Click untuk mencari...">
+  </div>
+
+  <!-- Area Produk -->
+  <main id="product-area">
+    <!-- Produk akan di-render di sini oleh JS -->
+  </main>
+
+  <!-- Area Order Baru (akan diisi JS) -->
+  <div id="order-area" class="hidden"></div>
+
+  <!-- Pop-up Deskripsi Produk -->
+  <div id="desc-popup" class="desc-popup hidden">
+    <div class="desc-popup-content">
+      <button class="close-desc-popup">&times;</button>
+      <h3 id="desc-popup-title"><span id="desc-popup-icon"></span>Deskripsi Produk</h3>
+      <div id="desc-popup-text"></div>
+    </div>
+  </div>
+
+  <!-- Pop-up Testimonial -->
+  <div id="testimonial-popup" class="testimonial-popup hidden">
+    <div class="testimonial-popup-content">
+      <button class="close-testimonial-popup">&times;</button>
+      <h2><i class="fas fa-star"></i> REVIEW CUSTOMER</h2>
+      
+      <!-- Review Submission Form -->
+      <div class="review-form">
+        <h3><i class="fas fa-plus"></i> Tambah Review Kamu</h3>
+        <div class="form-group">
+          <input type="text" id="reviewName" placeholder="Masukkan nama kamu" maxlength="20">
+        </div>
+        <div class="form-group">
+          <div class="rating-input">
+            <span>Rating:</span>
+            <div class="star-input">
+              <i class="fas fa-star" data-rating="1"></i>
+              <i class="fas fa-star" data-rating="2"></i>
+              <i class="fas fa-star" data-rating="3"></i>
+              <i class="fas fa-star" data-rating="4"></i>
+              <i class="fas fa-star" data-rating="5"></i>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <textarea id="reviewText" placeholder="Tulis review kamu di sini..." maxlength="200" rows="3"></textarea>
+        </div>
+        <button class="submit-review-btn" id="submitReviewBtn">
+          <i class="fas fa-paper-plane"></i> Kirim Review
+        </button>
+      </div>
+      
+      <div class="testimonial-list" id="testimonialList">
+        <!-- Testimonials will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html> 
